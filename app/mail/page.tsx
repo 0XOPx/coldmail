@@ -4,7 +4,7 @@ import Link from "next/link";
 import {Button,Input,Textarea} from "@/components/ui";
 export default function Mail(){
  const [folder,setFolder]=useState("inbox"),[rows,setRows]=useState<any[]>([]),[open,setOpen]=useState<any>(null),[to,setTo]=useState(""),[subject,setSubject]=useState(""),[body,setBody]=useState(""),[q,setQ]=useState(""),[busy,setBusy]=useState(false);
- async function load(){const r=await fetch("/api/mailbox?folder="+encodeURIComponent(folder)+(q?"&q="+encodeURIComponent(q):""));const j=await r.json();setRows(j.data||[])}
+ async function load(){const o=await fetch("/api/onboarding");const oj=await o.json();if(oj.data?.authenticated&&oj.data.step!=="complete"){location.href="/onboarding";return}const r=await fetch("/api/mailbox?folder="+encodeURIComponent(folder)+(q?"&q="+encodeURIComponent(q):""));const j=await r.json();setRows(j.data||[])}
  useEffect(()=>{load()},[folder]);
  async function send(){setBusy(true);const r=await fetch("/api/mail/send",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({to:to.split(",").map(x=>x.trim()).filter(Boolean),subject,body})});const j=await r.json();setBusy(false);if(!j.success){alert(j.error?.message||"Send failed");return}setTo("");setSubject("");setBody("");await load()}
  async function update(id:string,p:any){await fetch("/api/mailbox",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({id,...p})});await load()}
