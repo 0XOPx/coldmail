@@ -1,0 +1,4 @@
+import {NextResponse} from "next/server";
+import {createClient} from "@/lib/supabase/server";
+export async function GET(){const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({success:false},{status:401});const {data,error}=await s.from("profiles").select("id,display_name,created_at").eq("id",user.id).single();return NextResponse.json({success:!error,data,error:error?{code:"FAILED",message:error.message}:null});}
+export async function PATCH(req:Request){const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return NextResponse.json({success:false},{status:401});const b=await req.json();const {data,error}=await s.from("profiles").update({display_name:String(b.displayName||"").slice(0,120)}).eq("id",user.id).select().single();return NextResponse.json({success:!error,data,error:error?{code:"FAILED",message:error.message}:null});}
