@@ -11,7 +11,7 @@ export async function POST(request:Request){
     const password=String(body?.password||"");
     if(!/^\S+@\S+\.\S+$/.test(email)||password.length<8)return NextResponse.json({success:false,data:null,error:{code:"invalid_input",message:"Enter a valid email address and a password of at least 8 characters."},requestId:crypto.randomUUID()},{status:400});
     const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const key=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY;
     if(!url||!key)return NextResponse.json({success:false,data:null,error:{code:"server_configuration",message:"Signup is temporarily unavailable."},requestId:crypto.randomUUID()},{status:500});
     const admin=createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});
     const {data:allowed,error:limitError}=await admin.rpc("consume_signup_rate_limit",{p_key:"signup:"+ip,p_limit:5,p_window_seconds:3600});
