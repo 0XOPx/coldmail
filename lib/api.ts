@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";export function ok<T>(data:T,id:string){return NextResponse.json({success:true,data,error:null,requestId:id})}export function fail(code:string,message:string,status:number,id:string){return NextResponse.json({success:false,data:null,error:{code,message},requestId:id},{status})}
