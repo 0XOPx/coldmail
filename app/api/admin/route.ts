@@ -1,0 +1,8 @@
+import {NextResponse} from "next/server";
+import {createClient} from "@/lib/supabase/server";
+const out=(success:boolean,data:any,error:any=null,status=200)=>NextResponse.json({success,data,error,requestId:crypto.randomUUID()},{status});
+export async function GET(){const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return out(false,null,{code:"UNAUTHORIZED"},401);const {data:profile}=await s.from("profiles").select("is_admin").eq("id",user.id).single();if(!profile?.is_admin)return out(false,null,{code:"FORBIDDEN"},403);
+ const [{count:users},{count:messages},{count:events},{count:reports}]=await Promise.all([s.from("profiles").select("*",{count:"exact",head:true}),s.from("messages").select("*",{count:"exact",head:true}),s.from("delivery_events").select("*",{count:"exact",head:true}),s.from("spam_reports").select("*",{count:"exact",head:true})]);
+ return out(true,{users:users||0,messages:messages||0,deliveryEvents:events||0,spamReports:reports||0});
+}
+export async function POST(req:Request){const s=await createClient();const {data:{user}}=await s.auth.getUser();if(!user)return out(false,null,{code:"UNAUTHORIZED"},401);const {data:profile}=await s.from("profiles").select("is_admin").eq("id",user.id).single();if(!profile?.is_admin)return out(false,null,{code:"FORBIDDEN"},403);const b=await req.json();if(b.action!=="suspend"||!b.userId)return out(false,null,{code:"INVALID"},400);await s.from("audit_logs").insert({user_id:user.id,action:"admin_suspend_requested",target_type:"user",target_id:String(b.userId),metadata:{reason:String(b.reason||"").slice(0,500)}});return out(true,{recorded:true});}
