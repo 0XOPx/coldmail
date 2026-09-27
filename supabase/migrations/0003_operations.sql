@@ -1,4 +1,5 @@
 alter table public.profiles add column if not exists is_admin boolean not null default false;
+alter table public.profiles add column if not exists suspended_at timestamptz;
 create table if not exists public.rate_limits(
  key text primary key,
  window_started_at timestamptz not null default now(),
