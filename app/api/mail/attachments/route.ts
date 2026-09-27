@@ -10,9 +10,11 @@ export async function POST(req:Request){
  if(file.size>MAX)return NextResponse.json({success:false,error:{code:"PAYLOAD_TOO_LARGE"}},{status:413});
  if(!allowed.has(file.type))return NextResponse.json({success:false,error:{code:"UNSUPPORTED_TYPE"}},{status:415});
  const path=user.id+"/"+crypto.randomUUID()+"-"+safeFilename(file.name);
- const upload=await s.storage.from("mail-attachments").upload(path,file,{contentType:file.type,upsert:false});
+ const upload=await s.storage.from("attachments").upload(path,file,{contentType:file.type,upsert:false});
  if(upload.error)return NextResponse.json({success:false,error:{code:"UPLOAD_FAILED",message:upload.error.message}},{status:500});
- const {data,error}=await s.from("attachments").insert({message_id:messageId,storage_path:path,file_name:safeFilename(file.name),mime_type:file.type,size_bytes:file.size}).select().single();
- if(error){await s.storage.from("mail-attachments").remove([path]);return NextResponse.json({success:false,error:{code:"FAILED",message:error.message}},{status:500})}
+ const {data:owned}=await s.from("messages").select("id").eq("id",messageId).eq("sender_user_id",user.id).maybeSingle();
+ if(!owned){await s.storage.from("attachments").remove([path]);return NextResponse.json({success:false,error:{code:"FORBIDDEN"}},{status:403})}
+ const {data,error}=await s.from("attachments").insert({message_id:messageId,owner_user_id:user.id,storage_path:path,filename:safeFilename(file.name),mime_type:file.type,size_bytes:file.size}).select().single();
+ if(error){await s.storage.from("attachments").remove([path]);return NextResponse.json({success:false,error:{code:"FAILED",message:error.message}},{status:500})}
  return NextResponse.json({success:true,data,error:null,requestId:crypto.randomUUID()});
 }
