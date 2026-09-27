@@ -3,7 +3,7 @@ import {createClient} from "@/lib/supabase/server";
 const reply=(success:boolean,data:any,error:any=null,status=200)=>NextResponse.json({success,data,error,requestId:crypto.randomUUID()},{status});
 export async function GET(){
  const s=await createClient();const {data:{user}}=await s.auth.getUser();
- if(!user)return reply(true,{authenticated:false,step:"verify"});
+ if(!user)return reply(true,{authenticated:false,step:"login"});
  const {data:profile,error}=await s.from("profiles").select("display_name,onboarding_complete,onboarding_completed_at").eq("id",user.id).single();
  if(error)return reply(false,null,{code:"FAILED"},500);
  const {data:address}=await s.from("mail_addresses").select("address,username,is_primary").eq("user_id",user.id).eq("is_primary",true).maybeSingle();
@@ -13,7 +13,7 @@ export async function GET(){
 }
 export async function POST(req:Request){
  const s=await createClient();const {data:{user}}=await s.auth.getUser();
- if(!user)return reply(true,{next:"/auth/verify"});
+ if(!user)return reply(true,{next:"/auth/login"});
  const body=await req.json().catch(()=>null);const step=String(body?.step||"");
  if(step==="address"){
   const username=String(body?.username||"").toLowerCase().trim();
