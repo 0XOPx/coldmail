@@ -1,0 +1,9 @@
+"use client";
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {createClient} from "@/lib/supabase/client";
+export default function Settings(){const [name,setName]=useState("");const [address,setAddress]=useState("");const [saved,setSaved]=useState(false);
+ useEffect(()=>{fetch("/api/profile").then(r=>r.json()).then(j=>setName(j.data?.display_name||""));createClient().from("mail_addresses").select("address").eq("is_primary",true).maybeSingle().then(({data})=>setAddress(data?.address||""))},[]);
+ async function save(){await fetch("/api/profile",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({displayName:name})});setSaved(true);setTimeout(()=>setSaved(false),1500)}
+ async function signOut(){await createClient().auth.signOut();location.href="/auth/login"}
+ return <main className="min-h-screen bg-zinc-50 p-6"><div className="mx-auto max-w-2xl"><Link href="/mail" className="text-sm">← Mail</Link><h1 className="mt-8 text-4xl font-black">Settings</h1><section className="mt-6 rounded-3xl bg-white p-6"><h2 className="font-bold">Account</h2><p className="mt-2 text-sm text-zinc-500">{address||"No Coldmail address"}</p><input className="mt-4 w-full rounded-xl border p-3" value={name} onChange={e=>setName(e.target.value)} placeholder="Display name"/><button className="mt-3 rounded-xl bg-black px-4 py-3 text-white" onClick={save}>{saved?"Saved":"Save profile"}</button></section><section className="mt-4 rounded-3xl bg-white p-6"><h2 className="font-bold">Security</h2><button className="mt-3 rounded-xl border px-4 py-3" onClick={signOut}>Sign out</button></section></div></main>}
