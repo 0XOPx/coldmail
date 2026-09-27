@@ -4,7 +4,7 @@ import {useRouter} from "next/navigation";
 import {Button,Input} from "@/components/ui";
 export default function Onboarding(){
  const router=useRouter(),[step,setStep]=useState("loading"),[username,setUsername]=useState(""),[displayName,setDisplayName]=useState(""),[address,setAddress]=useState(""),[accepted,setAccepted]=useState(false),[error,setError]=useState(""),[busy,setBusy]=useState(false);
- async function load(){const r=await fetch("/api/onboarding");const j=await r.json();if(!j.data?.authenticated){router.replace("/auth/verify");return}setStep(j.data.step);setAddress(j.data.address?.address||"");setDisplayName(j.data.profile?.display_name||"");}
+ async function load(){const r=await fetch("/api/onboarding");const j=await r.json();if(!j.data?.authenticated){router.replace("/auth/login");return}setStep(j.data.step);setAddress(j.data.address?.address||"");setDisplayName(j.data.profile?.display_name||"");}
  useEffect(()=>{load()},[]);
  async function next(payload:any){setBusy(true);setError("");const r=await fetch("/api/onboarding",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});const j=await r.json();setBusy(false);if(!j.success){setError(j.error?.message||"Something went wrong. Try again.");return}if(payload.step==="address"){setAddress(j.data.address.address);setStep("profile")}else if(payload.step==="profile")setStep("tos");else if(payload.step==="tos")setStep("complete");else router.replace("/mail")}
  if(step==="loading")return <main className="min-h-screen bg-zinc-50"/>;
